@@ -1,235 +1,189 @@
-# app.py
 import os
-import time
-from datetime import datetime, timedelta
-from typing import List, Optional
-
-import cv2
-import numpy as np
-import jwt
+import sqlite3
+from datetime import timedelta
+from functools import wraps
+from flask import (
+    Flask, g, request, render_template, redirect, url_for,
+    jsonify, make_response, abort
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity,
+    set_access_cookies, unset_jwt_cookies
+)
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
-from pydantic import BaseModel
-from pymongo import MongoClient
-from bson import ObjectId
 
-# load .env
+# -------------------- App setup --------------------
 load_dotenv()
 
-MONGO_URI = os.getenv("MONGO_URI")
-DB_NAME = os.getenv("DB_NAME", "crowdcount_db")
-JWT_SECRET = os.getenv("JWT_SECRET", "change_this")
-JWT_ALGO = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
+app = Flask(__name__, static_folder="static", template_folder="templates")
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "dev-secret")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
 
-if not MONGO_URI:
-    raise RuntimeError("Please set MONGO_URI in .env before running")
+# Store JWT in HttpOnly cookies
+app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+app.config["JWT_COOKIE_SECURE"] = False        # True in production (HTTPS)
+app.config["JWT_COOKIE_SAMESITE"] = "Lax"      # "None" only with HTTPS
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # Consider enabling in prod
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=6)
 
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-bearer = HTTPBearer()
+jwt = JWTManager(app)
 
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+DB_PATH = os.path.join(os.path.dirname(__file__), "app.db")
 
-# -----------------------
-# Connect to MongoDB
-# -----------------------
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-users_col = db["users"]
-zones_col = db["zones"]
+# -------------------- DB helpers --------------------
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
-# ensure username unique index
-try:
-    users_col.create_index("username", unique=True)
-except Exception:
-    pass
+@app.teardown_appcontext
+def close_db(_exc):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
 
-# print connection success
-try:
-    # ping the server
-    client.admin.command("ping")
-    print("✅ MongoDB connected successfully.")
-except Exception as e:
-    print("❌ MongoDB connection failed:", e)
+def init_db():
+    db = get_db()
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'viewer' CHECK(role IN ('admin','viewer')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    db.commit()
 
-# -----------------------
-# Pydantic models
-# -----------------------
-class RegisterModel(BaseModel):
-    username: str
-    password: str
-    email: Optional[str] = None
+# Flask 3.x friendly: init DB on startup
+with app.app_context():
+    init_db()
 
+# -------------------- Auth utilities --------------------
+def current_user():
+    email = get_jwt_identity()
+    if not email:
+        return None
+    db = get_db()
+    return db.execute(
+        "SELECT id, name, email, role FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
 
-class LoginModel(BaseModel):
-    username: str
-    password: str
+def role_required(*roles):
+    def decorator(fn):
+        @wraps(fn)
+        @jwt_required(locations=["cookies"])
+        def wrapper(*args, **kwargs):
+            user = current_user()
+            if not user or user["role"] not in roles:
+                abort(403)
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
 
+# Make JWT errors redirect to /login (nice UX)
+@jwt.unauthorized_loader
+def _unauth(_reason):
+    return redirect(url_for("login_page"))
 
-class ZoneModel(BaseModel):
-    name: str
-    points: List[List[int]]
-    camera_id: Optional[str] = "cam1"
+@jwt.invalid_token_loader
+def _invalid(_reason):
+    return redirect(url_for("login_page"))
 
+@jwt.expired_token_loader
+def _expired(_header, _payload):
+    return redirect(url_for("login_page"))
 
-# -----------------------
-# Auth helpers
-# -----------------------
-def hash_password(password: str) -> str:
-    return pwd_ctx.hash(password)
+# -------------------- Pages --------------------
+@app.get("/")
+def home():
+    return redirect(url_for("login_page"))
 
+@app.get("/register")
+def register_page():
+    return render_template("register.html")
 
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_ctx.verify(plain, hashed)
+@app.get("/login")
+def login_page():
+    return render_template("login.html")
 
-
-def create_access_token(username: str, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=minutes)
-    payload = {"sub": username, "exp": expire}
-    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
-    return token
-
-
-def decode_token(token: str) -> dict:
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer)):
-    token = credentials.credentials
-    payload = decode_token(token)
-    username = payload.get("sub")
-    if not username:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-    user = users_col.find_one({"username": username})
+@app.get("/admin/dashboard")
+@jwt_required(locations=["cookies"])
+def dashboard_page():
+    user = current_user()
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return {"username": user["username"], "id": str(user["_id"])}
+        return redirect(url_for("login_page"))
+    return render_template("dashboard.html", user=dict(user))
 
+# -------------------- API: Auth --------------------
+@app.post("/api/register")
+def api_register():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
 
-# -----------------------
-# Pages
-# -----------------------
-@app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    if not name or not email or not password:
+        return jsonify({"ok": False, "message": "All fields are required."}), 400
 
+    db = get_db()
+    # First ever user becomes admin
+    total = db.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"]
+    role = "admin" if total == 0 else "viewer"
 
-@app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
-
-@app.get("/register", response_class=HTMLResponse)
-def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
-
-
-# -----------------------
-# Video stream (MJPEG)
-# -----------------------
-camera = cv2.VideoCapture(0)
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-
-def generate_frames():
-    while True:
-        success, frame = camera.read()
-        if not success:
-            blank = np.zeros((480, 640, 3), dtype=np.uint8)
-            _, buf = cv2.imencode(".jpg", blank)
-            frame_bytes = buf.tobytes()
-        else:
-            _, buf = cv2.imencode(".jpg", frame)
-            frame_bytes = buf.tobytes()
-        yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-        time.sleep(0.03)
-
-
-@app.get("/video_feed")
-def video_feed():
-    return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
-
-
-# -----------------------
-# Auth API
-# -----------------------
-@app.post("/api/auth/register")
-def api_register(payload: RegisterModel):
-    existing = users_col.find_one({"username": payload.username})
-    if existing:
-        return JSONResponse({"detail": "username already exists"}, status_code=400)
-    hashed = hash_password(payload.password)
-    doc = {
-        "username": payload.username,
-        "password": hashed,
-        "email": payload.email or "",
-        "created_at": time.time(),
-    }
-    users_col.insert_one(doc)
-    return {"status": "ok"}
-
-
-@app.post("/api/auth/login")
-def api_login(payload: LoginModel):
-    user = users_col.find_one({"username": payload.username})
-    if not user or not verify_password(payload.password, user["password"]):
-        return JSONResponse({"detail": "invalid credentials"}, status_code=401)
-    token = create_access_token(user["username"])
-    return {"access_token": token, "token_type": "bearer"}
-
-
-# -----------------------
-# Zones API (protected)
-# -----------------------
-@app.post("/api/zones")
-def api_save_zone(payload: ZoneModel, user=Depends(get_current_user)):
-    doc = {
-        "name": payload.name,
-        "points": payload.points,
-        "owner": user["username"],
-        "camera_id": payload.camera_id,
-        "created_at": time.time(),
-    }
-    res = zones_col.insert_one(doc)
-    return {"status": "ok", "id": str(res.inserted_id)}
-
-
-@app.get("/api/zones")
-def api_get_zones(user=Depends(get_current_user)):
-    docs = list(zones_col.find({"owner": user["username"]}))
-    out = []
-    for d in docs:
-        out.append({
-            "id": str(d["_id"]),
-            "name": d.get("name"),
-            "points": d.get("points"),
-            "camera_id": d.get("camera_id"),
-            "created_at": d.get("created_at"),
-        })
-    return {"zones": out}
-
-
-@app.delete("/api/zones/{zone_id}")
-def api_delete_zone(zone_id: str, user=Depends(get_current_user)):
     try:
-        oid = ObjectId(zone_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="invalid zone id")
-    res = zones_col.delete_one({"_id": oid, "owner": user["username"]})
-    if res.deleted_count == 1:
-        return {"status": "deleted"}
-    raise HTTPException(status_code=404, detail="zone not found")
+        db.execute(
+            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+            (name, email, generate_password_hash(password), role)
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"ok": False, "message": "Email already registered."}), 409
+
+    # No auto-login: user should log in next
+    return jsonify({"ok": True, "message": "Registered successfully. Please log in."}), 201
+
+@app.post("/api/login")
+def api_login():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify({"ok": False, "message": "Email and password required."}), 400
+
+    db = get_db()
+    user = db.execute(
+        "SELECT id, name, email, password_hash, role FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
+
+    if not user or not check_password_hash(user["password_hash"], password):
+        return jsonify({"ok": False, "message": "Invalid credentials."}), 401
+
+    token = create_access_token(identity=email)
+    resp = make_response(jsonify({"ok": True, "message": "Logged in."}))
+    set_access_cookies(resp, token)
+    return resp
+
+@app.post("/api/logout")
+def api_logout():
+    resp = make_response(jsonify({"ok": True, "message": "Logged out."}))
+    unset_jwt_cookies(resp)
+    return resp
+
+@app.get("/api/me")
+@jwt_required(locations=["cookies"])
+def api_me():
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False}), 404
+    return jsonify({"ok": True, "user": dict(user)})
+
+# -------------------- Run --------------------
+if __name__ == "__main__":
+    app.run(debug=True)
