@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crowd Count Dashboard</title>
-<link rel="stylesheet" href="/static/style.css">
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
   <div class="sidebar">
     <h2>Crowd Count</h2>
-    <ul>
-      <li><a href="#">📊 Dashboard</a></li>
-      <li><a href="#">🎥 Video Analytics</a></li>
-      <li><a href="#">👤 Profile</a></li>
-      <li><a href="#" id="logoutBtn">🚪 Logout</a></li>
-    </ul>
+<ul>
+  <li><a href="#" class="is-active">📊 Dashboard</a></li>
+  <li><a href="#">🎥 Video Analytics</a></li>
+  <li><a href="#">👤 Profile</a></li>
+  <li><a href="#" id="logoutBtn">🚪 Logout</a></li>
+</ul>
+
   </div>
 
   <div class="main-content">
     <header>
-      <h1>Welcome, User 🙋</h1>
+      <h1>Welcome, {{ user.name }} 🙋</h1>
+   
     </header>
 
     <section class="card">
       <h2>Dashboard Overview 📑</h2>
-      <p>This is your analytics dashboard. Here you can find insights and data from your video analytics, including crowd density, traffic flow, and more.</p>
+      <p>
+        This is your analytics dashboard. Here you can find insights and data from your video analytics,
+        including crowd density, traffic flow, and more.
+      </p>
     </section>
   </div>
 
-  <script src="/static/script.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
 </body>
 </html>
