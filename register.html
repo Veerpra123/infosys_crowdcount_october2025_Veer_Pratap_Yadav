@@ -1,37 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register</title>
- <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-
   <div class="auth-container">
     <div class="auth-box">
       <h2>Register</h2>
-      <form id="registerForm" onsubmit="handleRegister(event)">
+
+      <form id="registerForm">
         <div class="input-group">
           <i class="fa fa-user"></i>
-          <input type="text" id="reg-username" placeholder="Username" required>
+          <input type="text" id="reg-username" placeholder="Username" required />
         </div>
         <div class="input-group">
           <i class="fa fa-envelope"></i>
-          <input type="email" id="reg-email" placeholder="Email" required>
+          <input type="email" id="reg-email" placeholder="Email" required />
         </div>
         <div class="input-group">
           <i class="fa fa-lock"></i>
-          <input type="password" id="reg-password" placeholder="Password" required>
+          <input type="password" id="reg-password" placeholder="Password" required />
           <i class="fa fa-eye show-password"></i>
         </div>
         <button type="submit">Sign Up</button>
       </form>
-      <p>Already have an account? <a href="/login">Login</a></p>
+
+      <p id="register-msg" class="muted" style="margin-top:10px;"></p>
+      <p>Already have an account? <a href="{{ url_for('login_page') }}">Login</a></p>
     </div>
   </div>
 
-  <script src="/static/script.js"></script>
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
 </body>
 </html>
