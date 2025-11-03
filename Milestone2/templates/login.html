@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h2>Login</h2>
+
+      <!-- Updated:
+           - Added name="email" and name="password" for FormData()
+           - Changed eye icon to a <button> so JS can toggle visibility
+      -->
+      <form id="loginForm" autocomplete="on">
+        <div class="input-group">
+          <i class="fa fa-envelope" aria-hidden="true"></i>
+          <input
+            type="email"
+            id="login-email"
+            name="email"
+            placeholder="Email"
+            required
+            autocomplete="email"
+            aria-label="Email"
+          />
+        </div>
+        <div class="input-group">
+          <i class="fa fa-lock" aria-hidden="true"></i>
+          <input
+            type="password"
+            id="login-password"
+            name="password"
+            placeholder="Password"
+            required
+            autocomplete="current-password"
+            aria-label="Password"
+          />
+          <button type="button"
+            class="fa fa-eye show-password"
+            aria-label="Show password"
+            title="Show/Hide Password">
+          </button>
+        </div>
+        <button type="submit">Login</button>
+      </form>
+
+      <p id="login-msg" class="muted" style="margin-top:10px;"></p>
+      <p>Don't have an account? <a href="{{ url_for('register_page') }}">Register</a></p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
+</body>
+</html>
