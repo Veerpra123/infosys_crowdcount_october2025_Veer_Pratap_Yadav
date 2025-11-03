@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h2>Register</h2>
+
+      <!-- NOTE:
+           - id kept as 'registerForm' (your original)
+           - fields now have proper 'name' attributes for the API: name, email, password
+           - auth.js will submit JSON to /api/register
+      -->
+      <form id="registerForm" autocomplete="on">
+        <div class="input-group">
+          <i class="fa fa-user" aria-hidden="true"></i>
+          <input
+            type="text"
+            id="reg-username"
+            name="name"
+            placeholder="Username"
+            required
+            autocomplete="name"
+            aria-label="Username"
+          />
+        </div>
+
+        <div class="input-group">
+          <i class="fa fa-envelope" aria-hidden="true"></i>
+          <input
+            type="email"
+            id="reg-email"
+            name="email"
+            placeholder="Email"
+            required
+            autocomplete="email"
+            aria-label="Email"
+          />
+        </div>
+
+        <div class="input-group">
+          <i class="fa fa-lock" aria-hidden="true"></i>
+          <input
+            type="password"
+            id="reg-password"
+            name="password"
+            placeholder="Password"
+            required
+            minlength="6"
+            autocomplete="new-password"
+            aria-label="Password"
+          />
+          <!-- JS will toggle visibility on click -->
+          <button type="button" class="fa fa-eye show-password" aria-label="Show password" title="Show/Hide Password"></button>
+        </div>
+
+        <button type="submit">Sign Up</button>
+      </form>
+
+      <p id="register-msg" class="muted" style="margin-top:10px;"></p>
+      <p>Already have an account? <a href="{{ url_for('login_page') }}">Login</a></p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
+</body>
+</html>
