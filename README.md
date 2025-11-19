@@ -1,4 +1,5 @@
 📊 CrowdCount – AI-Based People Counting & Monitoring System
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-%3E%3D2.0-orange)](https://flask.palletsprojects.com/)
