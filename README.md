@@ -14,38 +14,31 @@ It detects people from camera or video feeds, assigns unique tracking IDs, monit
 This project is designed for public safety, retail analytics, smart surveillance, and operational monitoring.
 
 CrowdCount/
+│
 ├── services/
-│   ├── detector.py           # YOLOv8 detection + Simple Tracker
-│   ├── video_stream.py       # Video streaming (camera/video)
+│   ├── detector.py          # YOLOv8 detection + SimpleTracker
+│   └── video_stream.py      # Video streaming (camera/video)
 │
 ├── static/
-│   ├── admin.js              # Admin panel logic
-│   ├── auth.js               # Login/Register logic
-│   ├── script.js             # Dashboard (charts, live updates)
-│   ├── style.css             # UI styling
+│   ├── admin.js             # Admin panel logic
+│   ├── auth.js              # Login/Register logic
+│   ├── script.js            # Dashboard charts, live updates
+│   └── style.css            # UI styling
 │
 ├── templates/
-│   ├── admin_cameras.html    # Camera feed monitoring
-│   ├── admin_logs.html       # Alerts & activity logs
-│   ├── admin_reports.html    # PDF/CSV report downloads
-│   ├── dashboard.html        # User dashboard (live visualization)
-│   ├── login.html            # Login screen
-│   ├── register.html         # Signup screen
+│   ├── admin_cameras.html   # Camera feed monitoring
+│   ├── admin_logs.html      # Alerts & activity logs
+│   ├── admin_reports.html   # PDF/CSV report downloads
+│   ├── dashboard.html       # User dashboard (live visualization)
+│   ├── login.html           # Login screen
+│   └── register.html        # Signup screen
 │
 ├── uploads/
-│   ├── reports/              # Generated report files (PDF/CSV)
-│   ├── *.mp4                 # Uploaded videos
+│   └── reports/             # Generated report files (PDF/CSV)
 │
-├── app.db                    # SQLite database
-├── app.py                    # Main Flask backend
-├── requirements.txt
-├── yolov8n.pt                # YOLOv8 model weights
-
-
-
-6. Reports
-
-PDF reports generated using ReportLab
-
-CSV exported directly from DB
+├── *.mp4                    # Uploaded video files
+├── app.db                   # SQLite database
+├── app.py                   # Main Flask backend
+├── requirements.txt         # Python dependencies
+└── yolov8n.pt               # YOLOv8 model weights
 
