@@ -12,7 +12,7 @@ CrowdCount is an AI-powered real-time people-counting and crowd-monitoring syste
 It detects people from camera or video feeds, assigns unique tracking IDs, monitors zone activity, generates alerts, and provides visual dashboards and exportable reports.
 
 This project is designed for public safety, retail analytics, smart surveillance, and operational monitoring.
-
+```
 CrowdCount/
 │
 ├── services/
@@ -41,4 +41,4 @@ CrowdCount/
 ├── app.py                   # Main Flask backend
 ├── requirements.txt         # Python dependencies
 └── yolov8n.pt               # YOLOv8 model weights
-
+```
