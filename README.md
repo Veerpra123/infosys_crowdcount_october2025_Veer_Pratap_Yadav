@@ -45,7 +45,10 @@ CrowdCount/
 
 ⭐ Features
 
-     CrowdCount provides a complete end-to-end AI system for real-time people monitoring, zone tracking, and safety alerts. The key features include:
+     CrowdCount provides a complete end-to-end AI system for real-time people monitoring, zone tracking, and safety alerts.
+
+     
+      The key features include:
 
 1. Real-Time Person Detection
 
@@ -60,13 +63,16 @@ CrowdCount/
        Supports user-defined zones (Danger Zone / Safe Zone) and measures the time each person spends inside them.
 
 4. Automated Alert System
-
-        Triggers alerts when thresholds are crossed:
+   
+   Triggers alerts when thresholds are crossed:
+   
         Person inside danger zone for too long
+   
         Zone overcrowding
+   
         Overall population threshold exceeded
 
-5. Live Dashboard
+6. Live Dashboard
 
        Displays real-time charts and visuals including:
        Zone population bar chart
@@ -79,7 +85,7 @@ CrowdCount/
 
        Detailed person table
 
-6. Admin Panel
+7. Admin Panel
 
        Role-based secure admin interface to:
 
@@ -91,11 +97,11 @@ CrowdCount/
 
        Modify system thresholds (live apply, no server restart required)
 
-7. Authentication System
+8. Authentication System
 
        Secure login/register using hashed passwords and role-based access control.
 
-8. PDF & CSV Reports
+9. PDF & CSV Reports
 
     Generates:
 
@@ -103,10 +109,10 @@ CrowdCount/
 
         Complete CSV alert history
 
-9. Video Stream Processing
+10. Video Stream Processing
 
        Captures frames from camera/file and streams processed video to the dashboard.
 
-10. Database Integration
+11. Database Integration
 
         Stores all users, alerts, and settings in SQLite (or PostgreSQL upgradable).
