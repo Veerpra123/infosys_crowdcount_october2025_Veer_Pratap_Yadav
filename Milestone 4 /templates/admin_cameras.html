@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cameras • Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Crowd Count</h2>
+    <ul>
+      <li><a href="{{ url_for('dashboard_page') }}">📊 Dashboard</a></li>
+      <li><a href="{{ url_for('admin_cameras_page') }}" class="is-active">🎥 Cameras</a></li>
+      <li><a href="{{ url_for('admin_logs_page') }}">📜 Logs</a></li>
+      <li><a href="{{ url_for('admin_reports_page') }}">📂 Reports</a></li>
+      <li><a href="#" id="logoutBtn">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <header><h1>Camera Registry</h1></header>
+
+    <section class="card">
+      <div class="row">
+        <button class="btn" id="btnAddCam">➕ Add Camera</button>
+      </div>
+
+      <table class="table" id="camTable">
+        <thead><tr><th>ID</th><th>Name</th><th>RTSP / Source</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>
