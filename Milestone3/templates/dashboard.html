@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crowd Count Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <!-- Chart.js for M3 charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Crowd Count</h2>
+    <ul>
+      <li><a href="#" class="is-active">📊 Dashboard</a></li>
+      <li><a href="#">🎥 Video Analytics</a></li>
+      <li><a href="#">👤 Profile</a></li>
+
+      <!-- Admin-only items (hidden by default) -->
+      <li class="admin-only hidden">
+        <a href="/admin/cameras">📷 Camera Management</a>
+      </li>
+      <li class="admin-only hidden">
+        <a href="/admin/logs">📑 System Logs</a>
+      </li>
+      <li class="admin-only hidden">
+        <a href="/admin/reports">📄 Reports</a>
+      </li>
+
+      <li><a href="#" id="logoutBtn">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <header>
+      <h1>Welcome, {{ user.name }} 🙋</h1>
+    </header>
+
+    <section class="card">
+      <h2>Dashboard Overview 📑</h2>
+      <p class="muted">
+        Interactive dashboard with real-time analytics, visualizations, and alert system.
+      </p>
+    </section>
+
+    <!-- ✅ Video Controls -->
+    <section class="card">
+      <h2>Video Controls 🎛️</h2>
+
+      <div class="row">
+        <button id="btnStartCam">▶️ Start Camera</button>
+        <button id="btnStopCam">⏹ Stop Camera</button>
+
+        <label class="fileInput">
+          📁 Choose Video
+          <input type="file" id="videoFile" accept="video/*" />
+        </label>
+        <button id="btnUploadVideo">🎬 Use Video</button>
+
+        <label class="fileInput">
+          🖼 Choose Image
+          <input type="file" id="imageFile" accept="image/*" />
+        </label>
+        <button id="btnUploadImage">🖼 Use Image</button>
+      </div>
+
+      <small class="muted">*Camera or uploaded video/image will display below.</small>
+    </section>
+
+    <!-- ✅ Live Feed + Zones -->
+    <section class="card">
+      <h2>Live Camera 🎥</h2>
+
+      <div id="videoWrap" class="videoWrap">
+        <img id="feed" src="/video" alt="Live feed" />
+        <canvas id="zoneCanvas"></canvas>
+      </div>
+
+      <div class="tools row" style="margin-top:10px;">
+        <input id="zoneName" placeholder="Zone name (e.g., Entrance)" />
+        <button id="btnStart">Draw Zone</button>
+        <button id="btnSave" disabled>Save</button>
+        <button id="btnCancel" disabled>Cancel</button>
+
+        <!-- new precise tools -->
+        <button id="drawLineBtn" title="Draw a 2-point counting line">➖ Draw Line</button>
+        <button id="drawPolyBtn" title="Draw polygon zone">🔺 Draw Polygon</button>
+        <button id="editBtn" title="Pick and edit existing zone">✏️ Edit Zone</button>
+      </div>
+
+      <div class="legend">
+        <span class="pill">Line zone → <b>crossings</b></span>
+        <span class="pill">Polygon zone → <b>occupancy</b></span>
+      </div>
+    </section>
+
+    <!-- ✅ Zones + Live Stats + Alerts -->
+    <section class="card" style="display:grid; gap:10px;">
+      <h2>Zones 🗺️</h2>
+      <ul id="zoneList"></ul>
+
+      <h3 style="margin-top:10px;">Live Stats 📈</h3>
+      <div id="liveStats"></div>
+
+      <div class="row" style="margin-top:8px;">
+        <div class="badge">Alert Threshold</div>
+        <input class="input" type="number" id="alertThreshold" value="20" style="width:100px;">
+        <button class="btn" id="toggleAlerts">Enable Alerts</button>
+        <div class="right row">
+          <button class="btn secondary" id="btnExportCSV">⬇️ Export CSV</button>
+          <button class="btn secondary" id="btnExportPDF">⬇️ Export PDF</button>
+          <select id="exportWindow" class="select">
+            <option value="15">Last 15 min</option>
+            <option value="60">Last 60 min</option>
+            <option value="240">Last 4 hours</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="alertBanner" class="alert warn hidden">
+        <strong>⚠️ Crowd Alert:</strong> People count exceeded threshold.
+      </div>
+    </section>
+
+    <!-- ✅ Live Analytics (REPLACED with scrollable cards) -->
+    <!-- Live Analytics 📊 -->
+    <section class="card">
+      <h2>Live Analytics 📊</h2>
+
+      <!-- top row: line | bar -->
+      <div class="grid charts-grid">
+        <div class="chart-card scroll-card">
+          <div class="chart-card-header">People Over Time</div>
+          <div class="chart-card-body">
+            <canvas id="lineChart" class="chart-canvas" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card scroll-card">
+          <div class="chart-card-header">Zone Occupancy</div>
+          <div class="chart-card-body">
+            <canvas id="barChart" class="chart-canvas" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- bottom: heatmap full width -->
+      <div class="chart-card scroll-card" style="margin-top:14px;">
+        <div class="chart-card-header">Density Heatmap</div>
+        <div class="chart-card-body">
+          <canvas id="heatmapCanvas" class="chart-canvas" height="320"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- JS -->
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
