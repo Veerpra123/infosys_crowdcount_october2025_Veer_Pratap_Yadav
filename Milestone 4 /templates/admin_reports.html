@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports • Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Crowd Count</h2>
+    <ul>
+      <li><a href="{{ url_for('dashboard_page') }}">📊 Dashboard</a></li>
+      <li><a href="{{ url_for('admin_cameras_page') }}">🎥 Cameras</a></li>
+      <li><a href="{{ url_for('admin_logs_page') }}">📜 Logs</a></li>
+      <li><a href="{{ url_for('admin_reports_page') }}" class="is-active">📂 Reports</a></li>
+      <li><a href="#" id="logoutBtn">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <header><h1>Reports Library</h1></header>
+
+    <section class="card">
+      <div class="row">
+        <button class="btn" id="btnExportCSV">Export CSV (15m)</button>
+        <button class="btn" id="btnExportPDF">Export PDF (15m)</button>
+      </div>
+
+      <table class="table" id="repTable">
+        <thead><tr><th>ID</th><th>Time Window</th><th>Kind</th><th>File</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>
