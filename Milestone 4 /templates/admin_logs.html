@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logs • Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Crowd Count</h2>
+    <ul>
+      <li><a href="{{ url_for('dashboard_page') }}">📊 Dashboard</a></li>
+      <li><a href="{{ url_for('admin_cameras_page') }}">🎥 Cameras</a></li>
+      <li><a href="{{ url_for('admin_logs_page') }}" class="is-active">📜 Logs</a></li>
+      <li><a href="{{ url_for('admin_reports_page') }}">📂 Reports</a></li>
+      <li><a href="#" id="logoutBtn">🚪 Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <header><h1>System & User Logs</h1></header>
+
+    <section class="card">
+      <div class="row">
+        <select id="logLevel" class="select">
+          <option value="">All levels</option>
+          <option>INFO</option><option>WARN</option><option>ERROR</option>
+        </select>
+        <input id="logQuery" class="input" placeholder="Search action/meta/email" />
+        <input id="logFrom" type="datetime-local" class="input"/>
+        <input id="logTo" type="datetime-local" class="input"/>
+        <button class="btn" id="btnLogFilter">Filter</button>
+      </div>
+
+      <table class="table" id="logsTable">
+        <thead><tr><th>ID</th><th>Time</th><th>Level</th><th>Actor</th><th>Action</th><th>Meta</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="{{ url_for('static', filename='auth.js') }}"></script>
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>
